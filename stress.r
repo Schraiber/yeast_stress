@@ -279,10 +279,19 @@ readConcatenatedPhyDat = function(group,alignDir,badNames,goodNames) {
 	return(concatenated.dna)
 }
 
+#phy is an ape tree
+#group is a list of gene
+#alignDir is a directory in which to look for fasta files
+##it will look for genes as alignDir/gene.fa
+#badNames is a regular expression that captures some aspect of the names of the organisms in the fasta files
+#goodNames should correspond to phy$tip.labels
+#model is model
+#k is k
+#optNni is optNni
 fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="GTR",k=10,optNni=TRUE) {
 	concat.dna = readConcatenatedDNA(group,alignDir,badNames,goodNames)
 	concat.phyDat = phyDat(concat.dna)
 	optPML = pml(phy,concat.phyDat,model=model,k=k)
-	optPML = optim(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE)
+	optPML = optim.pml(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE)
 	return(optPML)
 }
