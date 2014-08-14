@@ -241,3 +241,49 @@ testConservation = function(conservation,group,numTest = 10000) {
 	}
 	return(list(groupMean=groupMean,testMeans=testMeans))	
 }
+
+readConcatenatedDNA = function(group,alignDir,badNames,goodNames) {
+	concatenated.dna = c()
+	for (i in 1:length(group)) {
+		if (is.na(group[i])) {
+			warning("Encountered an NA. Skipping")
+			next
+		}
+		curFile = paste(alignDir,"/",group[i],".fa",sep="")
+		curDat = read.dna(curFile,format="fasta",as.character=TRUE)
+		curNames = rownames(curDat)
+		nameMapping = sapply(badNames,grep,curNames)
+		curDat = curDat[nameMapping,]
+		concatenated.dna = cbind(concatenated.dna,curDat)
+	}
+	rownames(concatenated.dna) = goodNames
+	return(concatenated.dna)
+}
+
+readConcatenatedPhyDat = function(group,alignDir,badNames,goodNames) {
+	initialized = FALSE
+	for (i in 1:length(group)) {
+		if (is.na(group[i])) {
+			warning("Encountered an NA. Skipping")
+			next
+		}
+		curFile = paste(alignDir,"/",group[i],".fa",sep="")
+		curDat = readFastaToPhyDat(curFile,badNames,goodNames)
+		if (!initialized) {
+			concatenated.dna = curDat
+			initialized=TRUE
+		} else {
+			concatenated.dna = c(concatenated.dna,curDat)
+		}
+	}
+	return(concatenated.dna)
+}
+
+fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="GTR",k=10,optNni=TRUE) {
+	concat.dna = readConcatenatedDNA(group,alignDir,badNames,goodNames)
+	concat.phyDat = phyDat(concat.dna)
+	return(concat.phyDat)
+	optPML = pml(phy,concat.phyDat,model=model,k=k)
+	optPML = optim(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE)
+	return(optPML)
+}
