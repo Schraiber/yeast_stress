@@ -288,10 +288,16 @@ readConcatenatedPhyDat = function(group,alignDir,badNames,goodNames) {
 #model is model
 #k is k
 #optNni is optNni
-fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="GTR",k=10,optNni=TRUE) {
-	concat.dna = readConcatenatedDNA(group,alignDir,badNames,goodNames)
-	concat.phyDat = phyDat(concat.dna)
-	optPML = pml(phy,concat.phyDat,model=model,k=k)
+fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="JC",k=10,optNni=TRUE) {
+	concat_dna = readConcatenatedDNA(group,alignDir,badNames,goodNames)
+	print(dim(concat_dna))
+	print(concat_dna[,1:50])
+	concat_phyDat = phyDat(concat_dna)
+	print(concat_phyDat)
+	#concat.phyDat = readConcatenatedPhyDat(group,alignDir,badNames,goodNames)
+	#optPML = pml(phy,concat_phyDat,model=model,k=k)
+	optPML = pml(phy,concat_phyDat,model="JC")
+	print(optPML)
 	optPML = optim.pml(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE)
 	return(optPML)
 }
