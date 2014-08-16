@@ -253,6 +253,10 @@ readConcatenatedDNA = function(group,alignDir,badNames,goodNames) {
 		curDat = read.dna(curFile,format="fasta",as.character=TRUE)
 		curNames = rownames(curDat)
 		nameMapping = sapply(badNames,grep,curNames)
+		#the following hack DOES NOT work. Need to remove files
+		if (any(length(nameMapping)==0)) { next }
+		#print(group[i])
+		#print(nameMapping)
 		curDat = curDat[nameMapping,]
 		concatenated.dna = cbind(concatenated.dna,curDat)
 	}
@@ -288,16 +292,27 @@ readConcatenatedPhyDat = function(group,alignDir,badNames,goodNames) {
 #model is model
 #k is k
 #optNni is optNni
-fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="JC",k=10,optNni=TRUE) {
+fitTreeConcatenate = function(phy,group,alignDir,badNames,goodNames,model="GTR",k=4,optNni=TRUE) {
 	concat_dna = readConcatenatedDNA(group,alignDir,badNames,goodNames)
-	print(dim(concat_dna))
-	print(concat_dna[,1:50])
 	concat_phyDat = phyDat(concat_dna)
-	print(concat_phyDat)
 	#concat.phyDat = readConcatenatedPhyDat(group,alignDir,badNames,goodNames)
 	#optPML = pml(phy,concat_phyDat,model=model,k=k)
-	optPML = pml(phy,concat_phyDat,model="JC")
-	print(optPML)
-	optPML = optim.pml(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE)
+	optPML = pml(phy,concat_phyDat,model=model,k=4)
+	optPML = optim.pml(optPML,optNni=optNni,optQ=TRUE,optBf=TRUE,optInv=TRUE,optGamma=TRUE,control=pml.control(trace=0))
 	return(optPML)
 }
+
+nullTrees = function(phy,group,alignDir,badNames,goodNames,n=1,model="GTR",k=4,optNni=TRUE) {
+	numInGroup = sum(!is.na(group))
+	allAligns = list.files(alignDir,pattern=".fa")
+	allNames = sapply(strsplit(allAligns,".",fixed=TRUE),function(x){x[1]})
+	nullList = list(length=n)
+	for (i in 1:n) {
+		print(i)
+		if (i %% round(n/10)==0) { print(i) }
+		cur_genes = sample(allNames,numInGroup)
+		nullList[[i]] = fitTreeConcatenate(phy,cur_genes,alignDir,badNames,goodNames,model=model,k=k,optNni=optNni)	
+	}
+	return(nullList)
+}
+
