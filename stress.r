@@ -316,3 +316,38 @@ nullTrees = function(phy,group,alignDir,badNames,goodNames,n=1,model="GTR",k=4,o
 	return(nullList)
 }
 
+getDifferences = function(alignDir,s1,s2,badNames,goodNames) {
+	if (!(s1%in%goodNames && s2%in%goodNames)) {
+		warning("Asking for differences between species not found in the data")	
+	}
+	same = c()
+	sites = c()
+	genes = c()
+	files = list.files(alignDir,pattern=".fa")
+	for (i in 1:length(files)) {
+		if (is.na(files[i])) {
+			warning(paste("Encountered an NA in position ", i, ". Skipping",sep=""))
+			next
+		}
+		curFile = paste(alignDir,"/",files[i],sep="")
+		curDat = read.dna(curFile,format="fasta",as.character=TRUE)
+		if (nrow(curDat)!=length(goodNames)) {
+			warning("Encountered a malformed fasta in ", files[i],". Skipping.")
+			next
+		}
+		curNames = rownames(curDat)
+		nameMapping = sapply(badNames,grep,curNames)
+		rownames(curDat) = goodNames[nameMapping]
+		curSubDat = curDat[c(s1,s2),]
+		curSame = sum(apply(curSubDat,2,function(x){length(unique(x))==1&&!("-"%in%x)}))
+		curSites = sum(apply(curSubDat,2,function(x){!("-"%in%x)}))
+		curGene = unlist(strsplit(files[i],".",fixed=TRUE))[1]
+		same = c(same,curSame)
+		sites = c(sites,curSites)
+		genes = c(genes,curGene)
+	}
+	difs = sites-same
+	names(difs)=genes
+	names(sites)=genes
+	return(list(difs=difs,sites=sites)) 
+}
