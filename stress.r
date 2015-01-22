@@ -165,9 +165,9 @@ empirical_bayes_rates = function(dat,test,phy,norm=FALSE) {
 		if (norm) {
 			vcv_list[[i]] = normalize.vcv(vcv_list[[i]],norm)
 			vcv_list[[i]] = vcv_list[[i]][-norm,-norm]
+			dat = dat[-norm,]
 		}
 	}
-	dat = dat[-norm,]
 	betaTilde = sapply(vcv_list,function(v){best_beta+apply(dat,2,function(x){mahalanobis(x,mean(x),v)})})
 	betaTilde = matrix(betaTilde,ncol=nrow(test$wAIC))
 	alphaTilde = best_alpha + nrow(dat)/2
